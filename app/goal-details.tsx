@@ -10,7 +10,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
-import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, CreditCard as Edit3, Trash2, DollarSign, Clock, TrendingDown, X, CheckCircle, Zap } from 'lucide-react-native';
+import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, CreditCard as Edit3, Trash2, DollarSign, Clock, TrendingDown, X, CircleCheck as CheckCircle, Zap } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
