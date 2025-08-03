@@ -10,15 +10,19 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
-import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, CreditCard as Edit3, Trash2, DollarSign, Clock, TrendingDown, X, CircleCheck as CheckCircle, Zap } from 'lucide-react-native';
+import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, CreditCard as Edit3, DollarSign, Clock, TrendingUp, X, CircleCheck as CheckCircle, Zap } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useGoals } from '@/contexts/GoalsContext';
 
 const { width } = Dimensions.get('window');
 
 export default function GoalDetails() {
   const { id } = useLocalSearchParams();
+  const goalId = parseInt(id as string);
+  const { goals, addContribution, updateGoal, getGoalById, getContributionsByGoalId } = useGoals();
+  
   const [addMoneyModalVisible, setAddMoneyModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [contributionAmount, setContributionAmount] = useState('');
@@ -29,19 +33,21 @@ export default function GoalDetails() {
     description: '',
   });
   
-  // Mock goal data - in real app, this would come from state management or API
-  const [goal, setGoal] = useState({
-    id: 1,
-    title: 'Buy Dream House in Bangalore',
-    targetAmount: 8000000,
-    currentAmount: 2500000,
-    targetDate: '2027-06-15',
-    category: 'house',
-    monthlyTarget: 114583,
-    progress: 31,
-    createdDate: '2024-01-15',
-    description: 'A beautiful 3BHK apartment in Whitefield, Bangalore with all modern amenities and good connectivity.',
-  });
+  const goal = getGoalById(goalId);
+  const contributions = getContributionsByGoalId(goalId);
+
+  if (!goal) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Goal not found</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const goalCategories = [
     { id: 'house', name: 'House', icon: Home, color: '#2563EB', gradient: ['#3B82F6', '#1D4ED8'] },
@@ -52,14 +58,6 @@ export default function GoalDetails() {
     { id: 'baby', name: 'Baby', icon: Baby, color: '#EF4444', gradient: ['#F87171', '#DC2626'] },
     { id: 'emergency', name: 'Emergency', icon: Target, color: '#06B6D4', gradient: ['#22D3EE', '#0891B2'] },
     { id: 'retirement', name: 'Retirement', icon: Briefcase, color: '#8B5CF6', gradient: ['#A78BFA', '#7C3AED'] },
-  ];
-
-  const contributions = [
-    { id: 1, amount: 500000, date: '2024-01-15', type: 'initial' },
-    { id: 2, amount: 100000, date: '2024-02-15', type: 'monthly' },
-    { id: 3, amount: 150000, date: '2024-03-15', type: 'bonus' },
-    { id: 4, amount: 100000, date: '2024-04-15', type: 'monthly' },
-    { id: 5, amount: 200000, date: '2024-05-15', type: 'extra' },
   ];
 
   const getCategoryInfo = (categoryId) => {
@@ -89,30 +87,25 @@ export default function GoalDetails() {
     totalCurrentAmount: goal.currentAmount,
     monthlyRequirement: goal.monthlyTarget,
     progress: goal.progress,
+    remainingAmount: remainingAmount,
+    monthsRemaining: monthsRemaining,
   };
 
-  const addContribution = () => {
+  const handleAddContribution = () => {
     const amount = parseFloat(contributionAmount);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
 
-    const newCurrentAmount = goal.currentAmount + amount;
-    const newProgress = Math.min(100, Math.round((newCurrentAmount / goal.targetAmount) * 100));
-    
-    setGoal({
-      ...goal,
-      currentAmount: newCurrentAmount,
-      progress: newProgress,
-    });
+    addContribution(goalId, amount, 'extra');
 
     setContributionAmount('');
     setAddMoneyModalVisible(false);
     Alert.alert('Success!', `₹${amount} added to ${goal.title}`);
   };
 
-  const editGoal = () => {
+  const handleEditGoal = () => {
     if (!editedGoal.title || !editedGoal.targetAmount || !editedGoal.targetDate) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
@@ -124,22 +117,11 @@ export default function GoalDetails() {
       return;
     }
 
-    const newProgress = Math.min(100, Math.round((goal.currentAmount / targetAmount) * 100));
-    const targetDate = new Date(editedGoal.targetDate);
-    const monthsRemaining = Math.max(
-      1,
-      Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24 * 30))
-    );
-    const monthlyTarget = Math.ceil((targetAmount - goal.currentAmount) / monthsRemaining);
-
-    setGoal({
-      ...goal,
+    updateGoal(goalId, {
       title: editedGoal.title,
-      targetAmount: targetAmount,
+      targetAmount,
       targetDate: editedGoal.targetDate,
       description: editedGoal.description,
-      progress: newProgress,
-      monthlyTarget: monthlyTarget,
     });
 
     setEditModalVisible(false);
@@ -184,7 +166,7 @@ export default function GoalDetails() {
         <View style={styles.overviewCard}>
           <View style={styles.overviewHeader}>
             <Zap size={24} color="#F59E0B" />
-            <Text style={styles.overviewTitle}>Goals Overview</Text>
+            <Text style={styles.overviewTitle}>Goal Overview</Text>
           </View>
           <View style={styles.overviewStats}>
             <View style={styles.overviewStat}>
@@ -234,11 +216,11 @@ export default function GoalDetails() {
           </View>
         </View>
 
-        {/* Goal Overview Card */}
-        <View style={styles.overviewCard}>
+        {/* Goal Details Card */}
+        <View style={styles.goalOverviewCard}>
           <LinearGradient
             colors={['#FFFFFF', '#F8FAFC']}
-            style={styles.overviewGradient}
+            style={styles.goalOverviewGradient}
           >
             <View style={styles.goalHeader}>
               <LinearGradient
@@ -325,7 +307,7 @@ export default function GoalDetails() {
                 <TrendingUp size={20} color="#FFFFFF" />
               </LinearGradient>
               <Text style={styles.metricValue}>
-                ₹{(goal.currentAmount / contributions.length / 1000).toFixed(0)}K
+                ₹{contributions.length > 0 ? (goal.currentAmount / contributions.length / 1000).toFixed(0) : '0'}K
               </Text>
               <Text style={styles.metricLabel}>Avg Monthly</Text>
             </View>
@@ -356,31 +338,33 @@ export default function GoalDetails() {
         </View>
 
         {/* Contribution History */}
-        <View style={styles.historyCard}>
-          <Text style={styles.historyTitle}>Contribution History</Text>
-          <View style={styles.historyList}>
-            {contributions.map((contribution) => (
-              <View key={contribution.id} style={styles.historyItem}>
-                <View style={styles.historyIcon}>
-                  <Plus size={16} color="#10B981" />
+        {contributions.length > 0 && (
+          <View style={styles.historyCard}>
+            <Text style={styles.historyTitle}>Contribution History</Text>
+            <View style={styles.historyList}>
+              {contributions.map((contribution) => (
+                <View key={contribution.id} style={styles.historyItem}>
+                  <View style={styles.historyIcon}>
+                    <Plus size={16} color="#10B981" />
+                  </View>
+                  <View style={styles.historyInfo}>
+                    <Text style={styles.historyAmount}>
+                      {formatCurrency(contribution.amount)}
+                    </Text>
+                    <Text style={styles.historyDate}>
+                      {new Date(contribution.date).toLocaleDateString('en-IN')}
+                    </Text>
+                  </View>
+                  <View style={styles.historyType}>
+                    <Text style={styles.historyTypeText}>
+                      {contribution.type}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.historyInfo}>
-                  <Text style={styles.historyAmount}>
-                    {formatCurrency(contribution.amount)}
-                  </Text>
-                  <Text style={styles.historyDate}>
-                    {new Date(contribution.date).toLocaleDateString('en-IN')}
-                  </Text>
-                </View>
-                <View style={styles.historyType}>
-                  <Text style={styles.historyTypeText}>
-                    {contribution.type}
-                  </Text>
-                </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Goal Timeline */}
         <View style={styles.timelineCard}>
@@ -453,7 +437,7 @@ export default function GoalDetails() {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.addMoneyButton} onPress={addContribution}>
+            <TouchableOpacity style={styles.addMoneyButton} onPress={handleAddContribution}>
               <LinearGradient
                 colors={categoryInfo.gradient}
                 style={styles.addMoneyGradient}
@@ -529,7 +513,7 @@ export default function GoalDetails() {
               </View>
             </ScrollView>
 
-            <TouchableOpacity style={styles.editGoalButton} onPress={editGoal}>
+            <TouchableOpacity style={styles.editGoalButton} onPress={handleEditGoal}>
               <LinearGradient
                 colors={categoryInfo.gradient}
                 style={styles.editGoalGradient}
@@ -549,6 +533,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#EF4444',
+    marginBottom: 16,
+  },
+  backText: {
+    fontSize: 16,
+    color: '#2563EB',
+    fontWeight: '600',
   },
   headerGradient: {
     borderBottomLeftRadius: 24,
@@ -645,6 +646,16 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 16,
+  },
+  goalOverviewCard: {
+    marginBottom: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  goalOverviewGradient: {
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   goalOverviewCard: {
     marginBottom: 20,

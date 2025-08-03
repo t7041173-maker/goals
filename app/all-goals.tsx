@@ -8,78 +8,18 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, TrendingUp, Filter, Search, Eye } from 'lucide-react-native';
+import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, Search, Eye } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useGoals } from '@/contexts/GoalsContext';
 
 const { width } = Dimensions.get('window');
 
 export default function AllGoals() {
   const [filterCategory, setFilterCategory] = useState('all');
+  const { goals, addContribution } = useGoals();
 
-  const goals = [
-    {
-      id: 1,
-      title: 'Buy Dream House in Bangalore',
-      targetAmount: 8000000,
-      currentAmount: 2500000,
-      targetDate: '2027-06-15',
-      category: 'house',
-      monthlyTarget: 114583,
-      progress: 31,
-    },
-    {
-      id: 2,
-      title: 'Wedding Expenses',
-      targetAmount: 1500000,
-      currentAmount: 450000,
-      targetDate: '2025-12-01',
-      category: 'wedding',
-      monthlyTarget: 52500,
-      progress: 30,
-    },
-    {
-      id: 3,
-      title: 'Emergency Fund (6 months)',
-      targetAmount: 500000,
-      currentAmount: 400000,
-      targetDate: '2024-08-01',
-      category: 'emergency',
-      monthlyTarget: 16667,
-      progress: 80,
-    },
-    {
-      id: 4,
-      title: 'Child Education Fund',
-      targetAmount: 2500000,
-      currentAmount: 125000,
-      targetDate: '2035-06-01',
-      category: 'education',
-      monthlyTarget: 18056,
-      progress: 5,
-    },
-    {
-      id: 5,
-      title: 'Luxury Car Purchase',
-      targetAmount: 2000000,
-      currentAmount: 300000,
-      targetDate: '2026-03-01',
-      category: 'car',
-      monthlyTarget: 68000,
-      progress: 15,
-    },
-    {
-      id: 6,
-      title: 'Europe Vacation',
-      targetAmount: 400000,
-      currentAmount: 80000,
-      targetDate: '2025-09-01',
-      category: 'vacation',
-      monthlyTarget: 26667,
-      progress: 20,
-    },
-  ];
 
   const goalCategories = [
     { id: 'all', name: 'All', icon: Target, color: '#6B7280', gradient: ['#9CA3AF', '#6B7280'] },
@@ -110,8 +50,10 @@ export default function AllGoals() {
     ? goals 
     : goals.filter(goal => goal.category === filterCategory);
 
-  const addContribution = (goalId, amount) => {
-    Alert.alert('Success!', `₹${amount} added to your goal!`);
+  const handleAddContribution = (goalId: number, amount: number) => {
+    addContribution(goalId, amount, 'extra');
+    const goal = goals.find(g => g.id === goalId);
+    Alert.alert('Success!', `₹${amount} added to ${goal?.title}!`);
   };
 
   return (
@@ -277,7 +219,7 @@ export default function AllGoals() {
                             text: 'Add',
                             onPress: (amount) => {
                               const numAmount = parseFloat(amount || '0');
-                              if (numAmount > 0) {
+                                  handleAddContribution(goal.id, numAmount);
                                 addContribution(goal.id, numAmount);
                               }
                             },
