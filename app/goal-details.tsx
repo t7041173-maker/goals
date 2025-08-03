@@ -8,26 +8,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import {
-  Target,
-  Home,
-  GraduationCap,
-  Car,
-  Plane,
-  Heart,
-  Baby,
-  Calendar,
-  IndianRupee,
-  Briefcase,
-  ArrowLeft,
-  Plus,
-  TrendingUp,
-  Edit3,
-  Trash2,
-  DollarSign,
-  Clock,
-  TrendingDown,
-} from 'lucide-react-native';
+import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, TrendingUp, CreditCard as Edit3, Trash2, DollarSign, Clock, TrendingDown } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
