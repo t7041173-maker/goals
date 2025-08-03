@@ -218,60 +218,6 @@ export default function Goals() {
           </View>
         </LinearGradient>
 
-        {/* Goals Progress Overview */}
-        <View style={styles.overviewCard}>
-          <View style={styles.overviewHeader}>
-            <Zap size={24} color="#F59E0B" />
-            <Text style={styles.overviewTitle}>Goals Overview</Text>
-          </View>
-          <View style={styles.overviewStats}>
-            <View style={styles.overviewStat}>
-              <LinearGradient
-                colors={['#3B82F6', '#1D4ED8']}
-                style={styles.statGradient}
-              >
-                <Text style={styles.overviewStatValue}>
-                  {goalInsights.totalGoals}
-                </Text>
-              </LinearGradient>
-              <Text style={styles.overviewStatLabel}>Active Goals</Text>
-            </View>
-            <View style={styles.overviewStat}>
-              <LinearGradient
-                colors={['#10B981', '#047857']}
-                style={styles.statGradient}
-              >
-                <Text style={styles.overviewStatValue}>
-                  ₹{(goalInsights.totalCurrentAmount / 100000).toFixed(1)}L
-                </Text>
-              </LinearGradient>
-              <Text style={styles.overviewStatLabel}>Total Saved</Text>
-            </View>
-            <View style={styles.overviewStat}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706']}
-                style={styles.statGradient}
-              >
-                <Text style={styles.overviewStatValue}>
-                  ₹{(goalInsights.monthlyRequirement / 1000).toFixed(0)}K
-                </Text>
-              </LinearGradient>
-              <Text style={styles.overviewStatLabel}>Monthly Target</Text>
-            </View>
-            <View style={styles.overviewStat}>
-              <LinearGradient
-                colors={['#8B5CF6', '#7C3AED']}
-                style={styles.statGradient}
-              >
-                <Text style={styles.overviewStatValue}>
-                  {goalInsights.averageProgress.toFixed(0)}%
-                </Text>
-              </LinearGradient>
-              <Text style={styles.overviewStatLabel}>Avg Progress</Text>
-            </View>
-          </View>
-        </View>
-
         {/* Active Challenges */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -422,23 +368,6 @@ export default function Goals() {
                     >
                       <Plus size={16} color="#FFFFFF" />
                       <Text style={styles.contributeButtonText}>Add Money</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.sipButton, { backgroundColor: categoryInfo.color }]}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        Alert.alert(
-                          'Start SIP',
-                          `Start a SIP of ${formatCurrency(goal.monthlyTarget)} for this goal?`,
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            { text: 'Start SIP', onPress: () => Alert.alert('SIP Started!', 'Your SIP has been set up successfully.') },
-                          ]
-                        );
-                      }}
-                    >
-                      <TrendingUp size={16} color="#FFFFFF" />
-                      <Text style={styles.sipButtonText}>Start SIP</Text>
                     </TouchableOpacity>
                   </View>
                 </LinearGradient>
@@ -640,61 +569,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  overviewCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
-    marginTop: -12,
-    marginBottom: 24,
-    padding: 24,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  overviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  overviewTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-    marginLeft: 8,
-  },
-  overviewStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  overviewStat: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statGradient: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  overviewStatValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  overviewStatLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 16,
-  },
   section: {
     marginBottom: 32,
     paddingHorizontal: 20,
+    marginTop: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -843,11 +721,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   goalActions: {
-    flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'center',
   },
   contributeButton: {
-    flex: 1,
+    width: '100%',
     backgroundColor: '#2563EB',
     flexDirection: 'row',
     alignItems: 'center',
@@ -856,20 +733,6 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   contributeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginLeft: 6,
-  },
-  sipButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    padding: 14,
-  },
-  sipButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',

@@ -292,23 +292,6 @@ export default function AllGoals() {
                     <Plus size={16} color="#FFFFFF" />
                     <Text style={styles.contributeButtonText}>Add Money</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.sipButton, { backgroundColor: categoryInfo.color }]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      Alert.alert(
-                        'Start SIP',
-                        `Start a SIP of ${formatCurrency(goal.monthlyTarget)} for this goal?`,
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Start SIP', onPress: () => Alert.alert('SIP Started!', 'Your SIP has been set up successfully.') },
-                        ]
-                      );
-                    }}
-                  >
-                    <TrendingUp size={16} color="#FFFFFF" />
-                    <Text style={styles.sipButtonText}>Start SIP</Text>
-                  </TouchableOpacity>
                 </View>
               </LinearGradient>
             </TouchableOpacity>
@@ -499,11 +482,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   goalActions: {
-    flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'center',
   },
   contributeButton: {
-    flex: 1,
+    width: '100%',
     backgroundColor: '#2563EB',
     flexDirection: 'row',
     alignItems: 'center',
@@ -512,20 +494,6 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   contributeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginLeft: 6,
-  },
-  sipButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    padding: 14,
-  },
-  sipButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',

@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
+  TextInput,
+  Modal,
 } from 'react-native';
-import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, TrendingUp, CreditCard as Edit3, Trash2, DollarSign, Clock, TrendingDown } from 'lucide-react-native';
+import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Calendar, IndianRupee, Briefcase, ArrowLeft, Plus, CreditCard as Edit3, Trash2, DollarSign, Clock, TrendingDown, X, CheckCircle, Zap } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -17,9 +19,18 @@ const { width } = Dimensions.get('window');
 
 export default function GoalDetails() {
   const { id } = useLocalSearchParams();
+  const [addMoneyModalVisible, setAddMoneyModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [contributionAmount, setContributionAmount] = useState('');
+  const [editedGoal, setEditedGoal] = useState({
+    title: '',
+    targetAmount: '',
+    targetDate: '',
+    description: '',
+  });
   
   // Mock goal data - in real app, this would come from state management or API
-  const goal = {
+  const [goal, setGoal] = useState({
     id: 1,
     title: 'Buy Dream House in Bangalore',
     targetAmount: 8000000,
@@ -30,7 +41,7 @@ export default function GoalDetails() {
     progress: 31,
     createdDate: '2024-01-15',
     description: 'A beautiful 3BHK apartment in Whitefield, Bangalore with all modern amenities and good connectivity.',
-  };
+  });
 
   const goalCategories = [
     { id: 'house', name: 'House', icon: Home, color: '#2563EB', gradient: ['#3B82F6', '#1D4ED8'] },
@@ -73,26 +84,76 @@ export default function GoalDetails() {
     Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24 * 30))
   );
 
+  const goalInsights = {
+    totalTargetAmount: goal.targetAmount,
+    totalCurrentAmount: goal.currentAmount,
+    monthlyRequirement: goal.monthlyTarget,
+    progress: goal.progress,
+  };
+
   const addContribution = () => {
-    Alert.prompt(
-      'Add Contribution',
-      'Enter amount to add:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Add',
-          onPress: (amount) => {
-            const numAmount = parseFloat(amount || '0');
-            if (numAmount > 0) {
-              Alert.alert('Success!', `₹${numAmount} added to ${goal.title}`);
-            }
-          },
-        },
-      ],
-      'plain-text',
-      '',
-      'numeric'
+    const amount = parseFloat(contributionAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Error', 'Please enter a valid amount');
+      return;
+    }
+
+    const newCurrentAmount = goal.currentAmount + amount;
+    const newProgress = Math.min(100, Math.round((newCurrentAmount / goal.targetAmount) * 100));
+    
+    setGoal({
+      ...goal,
+      currentAmount: newCurrentAmount,
+      progress: newProgress,
+    });
+
+    setContributionAmount('');
+    setAddMoneyModalVisible(false);
+    Alert.alert('Success!', `₹${amount} added to ${goal.title}`);
+  };
+
+  const editGoal = () => {
+    if (!editedGoal.title || !editedGoal.targetAmount || !editedGoal.targetDate) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    const targetAmount = parseFloat(editedGoal.targetAmount);
+    if (isNaN(targetAmount) || targetAmount <= 0) {
+      Alert.alert('Error', 'Please enter a valid target amount');
+      return;
+    }
+
+    const newProgress = Math.min(100, Math.round((goal.currentAmount / targetAmount) * 100));
+    const targetDate = new Date(editedGoal.targetDate);
+    const monthsRemaining = Math.max(
+      1,
+      Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24 * 30))
     );
+    const monthlyTarget = Math.ceil((targetAmount - goal.currentAmount) / monthsRemaining);
+
+    setGoal({
+      ...goal,
+      title: editedGoal.title,
+      targetAmount: targetAmount,
+      targetDate: editedGoal.targetDate,
+      description: editedGoal.description,
+      progress: newProgress,
+      monthlyTarget: monthlyTarget,
+    });
+
+    setEditModalVisible(false);
+    Alert.alert('Success!', 'Goal updated successfully!');
+  };
+
+  const openEditModal = () => {
+    setEditedGoal({
+      title: goal.title,
+      targetAmount: goal.targetAmount.toString(),
+      targetDate: goal.targetDate,
+      description: goal.description,
+    });
+    setEditModalVisible(true);
   };
 
   return (
@@ -112,13 +173,67 @@ export default function GoalDetails() {
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Goal Details</Text>
           </View>
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity style={styles.editButton} onPress={openEditModal}>
             <Edit3 size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Goals Progress Overview */}
+        <View style={styles.overviewCard}>
+          <View style={styles.overviewHeader}>
+            <Zap size={24} color="#F59E0B" />
+            <Text style={styles.overviewTitle}>Goals Overview</Text>
+          </View>
+          <View style={styles.overviewStats}>
+            <View style={styles.overviewStat}>
+              <LinearGradient
+                colors={['#3B82F6', '#1D4ED8']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.overviewStatValue}>
+                  ₹{(goalInsights.totalCurrentAmount / 100000).toFixed(1)}L
+                </Text>
+              </LinearGradient>
+              <Text style={styles.overviewStatLabel}>Current Amount</Text>
+            </View>
+            <View style={styles.overviewStat}>
+              <LinearGradient
+                colors={['#10B981', '#047857']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.overviewStatValue}>
+                  ₹{(goalInsights.totalTargetAmount / 100000).toFixed(1)}L
+                </Text>
+              </LinearGradient>
+              <Text style={styles.overviewStatLabel}>Target Amount</Text>
+            </View>
+            <View style={styles.overviewStat}>
+              <LinearGradient
+                colors={['#F59E0B', '#D97706']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.overviewStatValue}>
+                  ₹{(goalInsights.monthlyRequirement / 1000).toFixed(0)}K
+                </Text>
+              </LinearGradient>
+              <Text style={styles.overviewStatLabel}>Monthly Target</Text>
+            </View>
+            <View style={styles.overviewStat}>
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED']}
+                style={styles.statGradient}
+              >
+                <Text style={styles.overviewStatValue}>
+                  {goalInsights.progress.toFixed(0)}%
+                </Text>
+              </LinearGradient>
+              <Text style={styles.overviewStatLabel}>Progress</Text>
+            </View>
+          </View>
+        </View>
+
         {/* Goal Overview Card */}
         <View style={styles.overviewCard}>
           <LinearGradient
@@ -219,7 +334,10 @@ export default function GoalDetails() {
 
         {/* Action Buttons */}
         <View style={styles.actionsCard}>
-          <TouchableOpacity style={styles.primaryAction} onPress={addContribution}>
+          <TouchableOpacity 
+            style={styles.primaryAction} 
+            onPress={() => setAddMoneyModalVisible(true)}
+          >
             <LinearGradient
               colors={categoryInfo.gradient}
               style={styles.primaryActionGradient}
@@ -228,22 +346,13 @@ export default function GoalDetails() {
               <Text style={styles.primaryActionText}>Add Contribution</Text>
             </LinearGradient>
           </TouchableOpacity>
-          <View style={styles.secondaryActions}>
-            <TouchableOpacity 
-              style={styles.secondaryAction}
-              onPress={() => Alert.alert('Start SIP', 'SIP feature coming soon!')}
-            >
-              <TrendingUp size={18} color="#2563EB" />
-              <Text style={styles.secondaryActionText}>Start SIP</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.secondaryAction}
-              onPress={() => Alert.alert('Edit Goal', 'Edit feature coming soon!')}
-            >
-              <Edit3 size={18} color="#059669" />
-              <Text style={styles.secondaryActionText}>Edit Goal</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.secondaryAction}
+            onPress={openEditModal}
+          >
+            <Edit3 size={18} color="#059669" />
+            <Text style={styles.secondaryActionText}>Edit Goal</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Contribution History */}
@@ -300,6 +409,138 @@ export default function GoalDetails() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Add Money Modal */}
+      <Modal visible={addMoneyModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={categoryInfo.gradient}
+              style={styles.modalHeader}
+            >
+              <Text style={styles.modalTitle}>Add Money</Text>
+              <TouchableOpacity onPress={() => setAddMoneyModalVisible(false)}>
+                <X size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <View style={styles.modalBody}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Amount (₹)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={contributionAmount}
+                  onChangeText={setContributionAmount}
+                  placeholder="Enter amount to add"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.quickAmounts}>
+                <Text style={styles.quickAmountsLabel}>Quick amounts:</Text>
+                <View style={styles.quickAmountsRow}>
+                  {[1000, 5000, 10000, 25000].map((amount) => (
+                    <TouchableOpacity
+                      key={amount}
+                      style={styles.quickAmountButton}
+                      onPress={() => setContributionAmount(amount.toString())}
+                    >
+                      <Text style={styles.quickAmountText}>₹{amount}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.addMoneyButton} onPress={addContribution}>
+              <LinearGradient
+                colors={categoryInfo.gradient}
+                style={styles.addMoneyGradient}
+              >
+                <Plus size={20} color="#FFFFFF" />
+                <Text style={styles.addMoneyButtonText}>Add Money</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Goal Modal */}
+      <Modal visible={editModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={categoryInfo.gradient}
+              style={styles.modalHeader}
+            >
+              <Text style={styles.modalTitle}>Edit Goal</Text>
+              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                <X size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <ScrollView style={styles.modalBody}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Goal Title</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editedGoal.title}
+                  onChangeText={(text) => setEditedGoal({ ...editedGoal, title: text })}
+                  placeholder="Enter goal title"
+                  placeholderTextColor="#9CA3AF"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Target Amount (₹)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editedGoal.targetAmount}
+                  onChangeText={(text) => setEditedGoal({ ...editedGoal, targetAmount: text })}
+                  placeholder="Enter target amount"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Target Date</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editedGoal.targetDate}
+                  onChangeText={(text) => setEditedGoal({ ...editedGoal, targetDate: text })}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#9CA3AF"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Description</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={editedGoal.description}
+                  onChangeText={(text) => setEditedGoal({ ...editedGoal, description: text })}
+                  placeholder="Enter goal description"
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.editGoalButton} onPress={editGoal}>
+              <LinearGradient
+                colors={categoryInfo.gradient}
+                style={styles.editGoalGradient}
+              >
+                <CheckCircle size={20} color="#FFFFFF" />
+                <Text style={styles.editGoalButtonText}>Update Goal</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -353,12 +594,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   overviewCard: {
+    backgroundColor: '#FFFFFF',
     marginTop: -12,
+    marginBottom: 20,
+    padding: 24,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  overviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  overviewTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginLeft: 8,
+  },
+  overviewStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  overviewStat: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  overviewStatValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  overviewStatLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  goalOverviewCard: {
     marginBottom: 20,
     borderRadius: 20,
     overflow: 'hidden',
   },
-  overviewGradient: {
+  goalOverviewGradient: {
     padding: 24,
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -505,12 +798,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginLeft: 8,
   },
-  secondaryActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
   secondaryAction: {
-    flex: 1,
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -519,6 +808,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    marginTop: 12,
   },
   secondaryActionText: {
     fontSize: 14,
@@ -624,5 +914,116 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    margin: 20,
+    maxHeight: '85%',
+    width: '90%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalBody: {
+    padding: 24,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    backgroundColor: '#F9FAFB',
+    color: '#111827',
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  quickAmounts: {
+    marginTop: 8,
+  },
+  quickAmountsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  quickAmountsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  quickAmountButton: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  quickAmountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  addMoneyButton: {
+    margin: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  addMoneyGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+  },
+  addMoneyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  editGoalButton: {
+    margin: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  editGoalGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+  },
+  editGoalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
