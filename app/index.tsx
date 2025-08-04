@@ -10,11 +10,10 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Plus, Calendar, X, CircleCheck as CheckCircle, IndianRupee, Briefcase, ArrowRight, Award, Eye } from 'lucide-react-native';
+import { Target, Chrome as Home, GraduationCap, Car, Plane, Heart, Baby, Plus, Calendar, DollarSign, TrendingUp, X, CircleCheck as CheckCircle, IndianRupee, Users, Briefcase, ArrowRight, Zap, Award, Eye } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useGoals } from '@/contexts/GoalsContext';
 
 const { width } = Dimensions.get('window');
 
@@ -25,10 +24,70 @@ export default function Goals() {
     amount: '',
     targetDate: '',
     category: 'house',
-    description: '',
   });
 
-  const { goals, addGoal, addContribution } = useGoals();
+  const [goals, setGoals] = useState([
+    {
+      id: 1,
+      title: 'Buy Dream House in Bangalore',
+      targetAmount: 8000000,
+      currentAmount: 2500000,
+      targetDate: '2027-06-15',
+      category: 'house',
+      monthlyTarget: 114583,
+      progress: 31,
+    },
+    {
+      id: 2,
+      title: 'Wedding Expenses',
+      targetAmount: 1500000,
+      currentAmount: 450000,
+      targetDate: '2025-12-01',
+      category: 'wedding',
+      monthlyTarget: 52500,
+      progress: 30,
+    },
+    {
+      id: 3,
+      title: 'Emergency Fund (6 months)',
+      targetAmount: 500000,
+      currentAmount: 400000,
+      targetDate: '2024-08-01',
+      category: 'emergency',
+      monthlyTarget: 16667,
+      progress: 80,
+    },
+    {
+      id: 4,
+      title: 'Child Education Fund',
+      targetAmount: 2500000,
+      currentAmount: 125000,
+      targetDate: '2035-06-01',
+      category: 'education',
+      monthlyTarget: 18056,
+      progress: 5,
+    },
+    {
+      id: 5,
+      title: 'Luxury Car Purchase',
+      targetAmount: 2000000,
+      currentAmount: 300000,
+      targetDate: '2026-03-01',
+      category: 'car',
+      monthlyTarget: 68000,
+      progress: 15,
+    },
+    {
+      id: 6,
+      title: 'Europe Vacation',
+      targetAmount: 400000,
+      currentAmount: 80000,
+      targetDate: '2025-09-01',
+      category: 'vacation',
+      monthlyTarget: 26667,
+      progress: 20,
+    },
+  ]);
 
   const goalCategories = [
     { id: 'house', name: 'House', icon: Home, color: '#2563EB', gradient: ['#3B82F6', '#1D4ED8'] },
@@ -41,7 +100,7 @@ export default function Goals() {
     { id: 'retirement', name: 'Retirement', icon: Briefcase, color: '#8B5CF6', gradient: ['#A78BFA', '#7C3AED'] },
   ];
 
-  const handleAddGoal = () => {
+  const addGoal = () => {
     if (!newGoal.title || !newGoal.amount || !newGoal.targetDate) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -56,25 +115,36 @@ export default function Goals() {
     );
     const monthlyTarget = Math.ceil(targetAmount / monthsRemaining);
 
-    addGoal({
+    const goal = {
+      id: Date.now(),
       title: newGoal.title,
       targetAmount,
       currentAmount: 0,
       targetDate: newGoal.targetDate,
       category: newGoal.category,
       monthlyTarget,
-      description: newGoal.description,
-    });
+      progress: 0,
+    };
 
+    setGoals([...goals, goal]);
     setModalVisible(false);
-    setNewGoal({ title: '', amount: '', targetDate: '', category: 'house', description: '' });
+    setNewGoal({ title: '', amount: '', targetDate: '', category: 'house' });
     Alert.alert('Success!', 'Your financial goal has been added successfully!');
   };
 
-  const handleAddContribution = (goalId: number, amount: number) => {
-    addContribution(goalId, amount, 'extra');
-    const goal = goals.find(g => g.id === goalId);
-    Alert.alert('Success!', `₹${amount} added to ${goal?.title}`);
+  const addContribution = (goalId, amount) => {
+    setGoals(goals.map(goal => {
+      if (goal.id === goalId) {
+        const newCurrentAmount = goal.currentAmount + amount;
+        const newProgress = Math.min(100, Math.round((newCurrentAmount / goal.targetAmount) * 100));
+        return {
+          ...goal,
+          currentAmount: newCurrentAmount,
+          progress: newProgress,
+        };
+      }
+      return goal;
+    }));
   };
 
   const getCategoryInfo = (categoryId) => {
@@ -99,6 +169,13 @@ export default function Goals() {
       icon: Target,
     },
     {
+      title: 'Start your first SIP',
+      progress: 0,
+      reward: 'Investment Badge',
+      type: 'investment',
+      icon: TrendingUp,
+    },
+    {
       title: 'Complete emergency fund',
       progress: 80,
       reward: '500 XP',
@@ -106,6 +183,14 @@ export default function Goals() {
       icon: Award,
     },
   ];
+
+  const goalInsights = {
+    totalGoals: goals.length,
+    totalTargetAmount: goals.reduce((sum, goal) => sum + goal.targetAmount, 0),
+    totalCurrentAmount: goals.reduce((sum, goal) => sum + goal.currentAmount, 0),
+    monthlyRequirement: goals.reduce((sum, goal) => sum + goal.monthlyTarget, 0),
+    averageProgress: goals.reduce((sum, goal) => sum + goal.progress, 0) / goals.length,
+  };
 
   const displayedGoals = goals.slice(0, 3);
 
@@ -269,7 +354,8 @@ export default function Goals() {
                               onPress: (amount) => {
                                 const numAmount = parseFloat(amount || '0');
                                 if (numAmount > 0) {
-                                  handleAddContribution(goal.id, numAmount);
+                                  addContribution(goal.id, numAmount);
+                                  Alert.alert('Success!', `₹${numAmount} added to ${goal.title}`);
                                 }
                               },
                             },
@@ -392,19 +478,6 @@ export default function Goals() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Description (Optional)</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  value={newGoal.description}
-                  onChangeText={(text) => setNewGoal({ ...newGoal, description: text })}
-                  placeholder="Describe your goal..."
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Category</Text>
                 <View style={styles.categorySelector}>
                   {goalCategories.map((category) => {
@@ -444,7 +517,7 @@ export default function Goals() {
               </View>
             </ScrollView>
 
-            <TouchableOpacity style={styles.createGoalButton} onPress={handleAddGoal}>
+            <TouchableOpacity style={styles.createGoalButton} onPress={addGoal}>
               <LinearGradient
                 colors={['#10B981', '#047857']}
                 style={styles.createGoalGradient}
@@ -802,10 +875,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     marginLeft: 8,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
   },
   createGoalButton: {
     margin: 24,
